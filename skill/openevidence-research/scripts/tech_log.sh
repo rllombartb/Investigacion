@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Registro técnico mínimo, SIN contenido clínico.
 # Uso: tech_log.sh <evento> <resultado>
-#   evento   ∈ vpn_status vpn_connect vpn_disconnect vpn_verify oe_session oe_query oe_timeout oe_error phi_block abort
+#   evento   ∈ vpn_status vpn_country vpn_connect vpn_disconnect vpn_verify oe_session oe_query oe_timeout oe_error phi_block abort
 #   resultado: palabra corta (ok, fail, true, false, unknown, timeout, login_required...)
 # Cualquier otro evento o un resultado con espacios/longitud >24 se rechaza,
 # para impedir que se cuele texto de la consulta en el log.
@@ -11,7 +11,7 @@ LOG_DIR="${OE_LOG_DIR:-$HOME/Library/Logs/openevidence-research}"
 
 ev="${1:-}"; res="${2:-}"
 case "$ev" in
-  vpn_status|vpn_connect|vpn_disconnect|vpn_verify|oe_session|oe_query|oe_timeout|oe_error|phi_block|abort) ;;
+  vpn_status|vpn_country|vpn_connect|vpn_disconnect|vpn_verify|oe_session|oe_query|oe_timeout|oe_error|phi_block|abort) ;;
   *) echo "tech_log: evento no permitido" >&2; exit 2 ;;
 esac
 if ! printf '%s' "$res" | grep -Eq '^[A-Za-z0-9_=.-]{1,24}$'; then

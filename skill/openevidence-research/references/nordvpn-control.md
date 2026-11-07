@@ -1,5 +1,9 @@
 # Control de NordVPN en macOS
 
+**Propósito de la VPN:** OpenEvidence no da servicio en España. La VPN se usa
+para salir por un servidor de **EE. UU.** Es una decisión del usuario, que asume
+el riesgo frente a las condiciones de uso de OpenEvidence (ver README).
+
 ## Qué mecanismo usar (y por qué)
 
 | Mecanismo | Estado en macOS | Uso en esta skill |
@@ -18,10 +22,12 @@ mientras Computer Use sea fiable (ver «Cuándo proponer un MCP»).
 
 ```bash
 bash scripts/vpn_check.sh
-# protected=true    -> tráfico sale por NordVPN
-# protected=false   -> no protegido
-# protected=unknown -> no se pudo comprobar: tratar como NO protegido
+# exit 0  protected=true country=US country_ok=true   -> listo
+# exit 4  protected=true country=FR country_ok=false  -> VPN activa, país incorrecto
+# exit 1  protected=false                             -> no protegido
+# exit 3  protected=unknown                           -> no se pudo comprobar: tratar como NO protegido
 ```
+`OE_REQUIRED_COUNTRY` cambia el país requerido (vacío = sin requisito).
 
 El script no guarda la IP ni nada clínico; solo imprime el booleano y el país
 si lo devuelve el endpoint.
@@ -30,12 +36,21 @@ si lo devuelve el endpoint.
 
 1. Lee primero la skill `computer-use` si está disponible.
 2. Abre la app «NordVPN» (pide acceso a la app si Computer Use lo requiere).
-3. Pulsa **Quick Connect / Conexión rápida**. No cambies país, protocolo,
-   Kill Switch, Threat Protection ni ningún ajuste.
+3. Usa el buscador de países de la app → **United States** → conectar.
+   **No** uses Quick Connect / Conexión rápida (elige el servidor más cercano,
+   en Europa). No cambies protocolo, Kill Switch, Threat Protection ni ningún ajuste.
 4. Si aparece login de NordVPN, Touch ID, contraseña de macOS o diálogo de
    permisos del sistema → **detente y pide al usuario que lo complete**.
 5. Espera hasta 45 s; vuelve a ejecutar `vpn_check.sh` cada ~10 s.
-6. Máximo 2 intentos de conexión. Si sigue `false/unknown` → abortar el flujo.
+6. Máximo 2 intentos de conexión. Si no da exit 0 (no protegido, desconocido o país distinto de US) → abortar el flujo.
+
+## Cambiar de país (solo si el estado inicial era `conectado-otro-país` y el usuario lo aprobó)
+
+1. Anota el país inicial (lo imprime `vpn_check.sh`).
+2. En la app, buscador → United States → conectar. Verifica exit 0.
+3. Al terminar: buscador → país inicial → conectar. Verifica con
+   `OE_REQUIRED_COUNTRY=<país inicial> bash scripts/vpn_check.sh`.
+   El servidor concreto puede ser distinto del original; el país, no.
 
 ## Desconectar (solo si el estado inicial era desconectado)
 
@@ -47,8 +62,9 @@ si lo devuelve el endpoint.
 ## Invariantes
 
 - Registrar `ESTADO_INICIAL` **antes** de cualquier acción.
-- Nunca desconectar si `ESTADO_INICIAL = conectado` (TEST 2).
-- Nunca abrir OpenEvidence sin `protected=true` justo antes (TEST 4).
+- Nunca desconectar ni reconectar si `ESTADO_INICIAL = conectado-US` (TEST 2).
+- Nunca cambiar de país sin preguntar si la VPN ya estaba conectada a otro país (TEST 2b).
+- Nunca abrir OpenEvidence sin exit 0 de `vpn_check.sh` justo antes (TEST 4).
 - Restaurar el estado también si el flujo aborta.
 - Una sola operación de VPN a la vez: no lances dos conexiones simultáneas.
 

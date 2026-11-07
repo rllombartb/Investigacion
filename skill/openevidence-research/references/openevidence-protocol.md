@@ -2,7 +2,7 @@
 
 ## Precondiciones
 
-- VPN verificada (`protected=true`) en este mismo flujo.
+- VPN verificada en EE. UU. (`vpn_check.sh` exit 0) en este mismo flujo.
 - Consulta anonimizada y validada con `phi_check.py`.
 - El usuario ha visto la consulta exacta que se va a enviar.
 
@@ -41,6 +41,11 @@
 
 ## Si OpenEvidence muestra un error de región/acceso
 
-Detente y comunícalo literalmente al usuario. No pruebes otros servidores VPN
-ni otros países para sortearlo: decidir eso es del usuario y puede afectar a
-las condiciones de uso del servicio.
+1. Comprueba `vpn_check.sh`. Si ya no es exit 0, la VPN se ha caído: vuelve a §4 de SKILL.md.
+2. Si es exit 0, reconecta **una vez** a otro servidor de United States en la app
+   y recarga la página.
+3. Si persiste → detente, comunícalo literalmente y restaura la VPN. No pruebes
+   más servidores ni otros países, ni intentes ocultar la ubicación por otras vías
+   (zona horaria, idioma, extensiones).
+4. Si OpenEvidence pide verificación de identidad o de licencia profesional,
+   detente: lo hace el usuario.

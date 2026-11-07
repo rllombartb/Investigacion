@@ -8,7 +8,10 @@
 | Computer Use no ve la app | Permisos de Accesibilidad/Grabación de pantalla no concedidos a Claude | Se detiene | Ajustes del Sistema → Privacidad y seguridad → Accesibilidad y Grabación de pantalla → Claude |
 | Computer Use no puede actuar en NordVPN | La app está en un nivel de acceso restringido | Pide acceso a la app | Aprueba el acceso cuando lo solicite |
 | OpenEvidence muestra login | Sesión caducada en Chrome | Se detiene (TEST 5) | Inicia sesión en Chrome y confirma |
-| OpenEvidence muestra error de región | El servicio no admite tu ubicación/IP | Se detiene y lo comunica | Decide tú; ver nota sobre condiciones de uso en `README` |
+| `vpn_check` exit 4, `country_ok=false` | VPN conectada a un servidor fuera de EE. UU. (p. ej. Conexión rápida) | Si la conectó Claude, reconecta a United States; si ya estaba así, pregunta | — |
+| `vpn_check` exit 4, `country_ok=unknown` | El endpoint no devolvió el país | Aborta | Comprueba a mano el país en la app; como último recurso `OE_REQUIRED_COUNTRY=` desactiva la comprobación |
+| OpenEvidence muestra error de región con VPN en EE. UU. | IP del servidor marcada como VPN | Reconecta una vez a otro servidor de EE. UU.; si persiste, se detiene | Valora otro servidor a mano o desiste |
+| OpenEvidence pide verificar identidad/licencia o suspende la cuenta | Detección de uso fuera de su ámbito | Se detiene | Lo resuelves tú con OpenEvidence |
 | Claude in Chrome no responde | Extensión desactivada o Chrome cerrado | Lo informa | Abre Chrome y activa la extensión Claude |
 | Respuesta truncada | Generación aún en curso o timeout | Espera hasta 120 s; si no, informa que es parcial | Repetir la consulta más tarde |
 | Referencias sin DOI/PMID | OpenEvidence no los muestra | Busca en PubMed; si no, `[NO VERIFICADO]` | — |

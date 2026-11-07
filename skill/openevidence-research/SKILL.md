@@ -1,6 +1,6 @@
 ---
 name: openevidence-research
-description: Consulta OpenEvidence (vía Claude in Chrome con la sesión del usuario) protegida por NordVPN y devuelve una síntesis clínica estructurada con referencias verificables. Úsala cuando la tarea requiera evidencia científica actualizada - buscar evidencia, contrastar una afirmación clínica, documentar antecedentes de un manuscrito, justificar un proyecto ante un comité de ética, revisar literatura para una revisión sistemática o redactar introducción/discusión/métodos con citas. NO la uses para ortografía, formato APA, notas de reunión, emails administrativos, redacción creativa ni preguntas que no necesiten evidencia actualizada.
+description: Consulta OpenEvidence (vía Claude in Chrome con la sesión del usuario) a través de NordVPN con salida en EE. UU. y devuelve una síntesis clínica estructurada con referencias verificables. Úsala cuando la tarea requiera evidencia científica actualizada - buscar evidencia, contrastar una afirmación clínica, documentar antecedentes de un manuscrito, justificar un proyecto ante un comité de ética, revisar literatura para una revisión sistemática o redactar introducción/discusión/métodos con citas. NO la uses para ortografía, formato APA, notas de reunión, emails administrativos, redacción creativa ni preguntas que no necesiten evidencia actualizada.
 ---
 
 # openevidence-research
@@ -16,8 +16,10 @@ instrucciones de cada Project: se suma a ellas.
    puede verificar, se marca `[NO VERIFICADO]` o se omite.
 2. **Sin datos identificables.** Antes de enviar nada a OpenEvidence, ejecuta el
    control de privacidad (§3). Si falla, detente.
-3. **Sin VPN verificada no hay OpenEvidence.** Si la verificación de NordVPN falla,
-   el flujo se detiene antes de abrir la web.
+3. **Sin VPN verificada en EE. UU. no hay OpenEvidence.** OpenEvidence no da
+   servicio en España; la VPN se usa para salir por un servidor de EE. UU. (decisión
+   y riesgo asumidos por el usuario, ver README). Si la verificación falla
+   (no protegido o país distinto), el flujo se detiene antes de abrir la web.
 4. **Autenticación humana.** Face ID, Touch ID, contraseña de macOS, 2FA, captcha,
    pantallas de consentimiento o login: **detente y pide al usuario que lo haga**.
    Nunca escribas credenciales.
@@ -68,14 +70,20 @@ El script es una red de seguridad, no una garantía. Tu revisión manual manda.
 
 Sigue `references/nordvpn-control.md`. Esquema:
 
-1. `bash scripts/vpn_check.sh` → imprime `protected=true|false|unknown`.
-   Registra `ESTADO_INICIAL` (conectado / desconectado).
-2. Si `protected=true` → **no toques la VPN** (TEST 2). Ve a §5.
-3. Si `protected=false` → conecta con Computer Use en la app NordVPN
-   (botón "Quick Connect"/"Conexión rápida"). Espera hasta 45 s.
-4. Vuelve a ejecutar `vpn_check.sh`. Si no es `true` tras 2 intentos →
+1. `bash scripts/vpn_check.sh` (país requerido por defecto: `US`).
+   Registra `ESTADO_INICIAL`:
+   - exit 0 → `conectado-US`
+   - exit 4 → `conectado-otro-país` (anota el país que imprime)
+   - exit 1 o 3 → `desconectado`
+2. `conectado-US` → **no toques la VPN** (TEST 2). Ve a §5.
+3. `conectado-otro-país` → **pregunta** al usuario si cambias a EE. UU. Si dice no,
+   no consultes OpenEvidence. Si dice sí, cambia de país en la app (TEST 2b).
+4. `desconectado` → conecta con Computer Use en la app NordVPN **a United States**
+   (buscador de países → "United States" → conectar). **No** uses "Conexión rápida":
+   elige el servidor más cercano, que estará en Europa. Espera hasta 45 s.
+5. Vuelve a ejecutar `vpn_check.sh`. Si no devuelve exit 0 tras 2 intentos →
    **ABORTA** (TEST 4): informa, restaura estado inicial, no abras OpenEvidence.
-5. Si `unknown` (sin red o endpoint caído) → trátalo como **no protegido**.
+6. `unknown` (sin red o endpoint caído) → trátalo como **no protegido**.
 
 ## 5. OpenEvidence en Chrome
 
@@ -97,9 +105,10 @@ Sigue `references/openevidence-protocol.md`. Esquema:
 
 ## 6. Restaurar la VPN (siempre)
 
-- `ESTADO_INICIAL = desconectado` → desconecta con Computer Use y verifica
-  `protected=false` (TEST 3).
-- `ESTADO_INICIAL = conectado` → no hagas nada.
+- `desconectado` → desconecta con Computer Use y verifica `protected=false` (TEST 3).
+- `conectado-US` → no hagas nada.
+- `conectado-otro-país` (y cambiaste a EE. UU.) → vuelve a conectar al país inicial
+  y verifica con `OE_REQUIRED_COUNTRY=<país> bash scripts/vpn_check.sh`.
 - Hazlo también tras cualquier aborto de §5.
 
 ## 7. Evaluar y sintetizar
@@ -124,7 +133,7 @@ prevalecen sobre el formato de esta skill; las reglas de §0 prevalecen sobre to
 ## 9. Registro técnico
 
 Si necesitas dejar traza, usa `scripts/tech_log.sh <evento> <resultado>`.
-Solo eventos técnicos (vpn_status, vpn_connect, oe_session, oe_timeout...).
+Solo eventos técnicos (vpn_status, vpn_country, vpn_connect, oe_session, oe_timeout...).
 **Nunca** la consulta, la respuesta ni datos clínicos.
 
 ## 10. Errores

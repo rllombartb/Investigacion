@@ -17,11 +17,16 @@ expect(){ # name expected_exit expected_stdout_prefix cmd...
 echo '{"ip":"x","country_code":"US","protected": true}' > "$T/t.json"
 echo '{"country_code":"ES","protected":false}'          > "$T/f.json"
 echo 'not json'                                          > "$T/g.json"
+echo '{"country_code":"fr","protected":true}'           > "$T/fr.json"
+echo '{"protected":true}'                                > "$T/nc.json"
 
-expect vpn_true    0 "protected=true country=US" env NORDVPN_INSIGHTS_URL="file://$T/t.json" bash "$S/vpn_check.sh"
+expect vpn_true    0 "protected=true country=US country_ok=true" env NORDVPN_INSIGHTS_URL="file://$T/t.json" bash "$S/vpn_check.sh"
 expect vpn_false   1 "protected=false"           env NORDVPN_INSIGHTS_URL="file://$T/f.json" bash "$S/vpn_check.sh"
 expect vpn_garbage 3 "protected=unknown"         env NORDVPN_INSIGHTS_URL="file://$T/g.json" bash "$S/vpn_check.sh"
 expect vpn_noconn  3 "protected=unknown"         env NORDVPN_INSIGHTS_URL="file://$T/missing.json" bash "$S/vpn_check.sh"
+expect vpn_wrong_country 4 "protected=true country=FR country_ok=false" env NORDVPN_INSIGHTS_URL="file://$T/fr.json" bash "$S/vpn_check.sh"
+expect vpn_no_country    4 "protected=true country_ok=unknown"           env NORDVPN_INSIGHTS_URL="file://$T/nc.json" bash "$S/vpn_check.sh"
+expect vpn_no_requirement 0 "protected=true country=FR"                  env OE_REQUIRED_COUNTRY= NORDVPN_INSIGHTS_URL="file://$T/fr.json" bash "$S/vpn_check.sh"
 # La salida nunca debe incluir la IP
 out="$(NORDVPN_INSIGHTS_URL="file://$T/t.json" bash "$S/vpn_check.sh")"; [[ "$out" != *'"ip"'* && "$out" != *"x "* ]] && ok vpn_no_ip || ko vpn_no_ip "$out"
 

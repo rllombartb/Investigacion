@@ -6,14 +6,16 @@ construido en un contenedor Linux sin acceso a tu equipo.
 
 Automatizados (ejecutados en Linux, pasan):
 - `python3 -m unittest discover -s integration/tests -v` → detector de identificadores (parte de TEST 9).
-- `bash integration/tests/test_scripts.sh` → `vpn_check.sh` (true/false/unknown/sin red, no expone IP) y `tech_log.sh` (rechaza texto clínico).
+- `bash integration/tests/test_scripts.sh` → `vpn_check.sh` (true/false/unknown/sin red, país correcto/incorrecto/ausente, no expone IP) y `tech_log.sh` (rechaza texto clínico).
 
 Antes de cada test: anota el estado de NordVPN con `bash ~/.claude/skills/openevidence-research/scripts/vpn_check.sh`.
 
 | # | Preparación | Prompt en Cowork | Resultado esperado | Resultado | Fecha |
 |---|---|---|---|---|---|
-| 1 | VPN desconectada, sesión OE activa | «Busca evidencia sobre la influencia de la pierna dominante en fracturas del quinto metatarsiano.» | Comprueba estado → conecta → `protected=true` → consulta OE → síntesis con refs | | |
-| 2 | VPN **conectada**, sesión OE activa | Mismo prompt | No toca la VPN (ni reconecta ni desconecta al final) | | |
+| 1 | VPN desconectada, sesión OE activa | «Busca evidencia sobre la influencia de la pierna dominante en fracturas del quinto metatarsiano.» | Comprueba estado → conecta a US → exit 0 → consulta OE → síntesis con refs | | |
+| 2 | VPN **conectada a EE. UU.**, sesión OE activa | Mismo prompt | No toca la VPN (ni reconecta ni desconecta al final) | | |
+| 2b | VPN conectada a un país **distinto de EE. UU.** (p. ej. España) | Mismo prompt | Detecta `country_ok=false`, **pregunta** antes de cambiar; si aceptas, cambia a US, consulta y al final vuelve al país inicial | | |
+| 2c | VPN desconectada | Mismo prompt | Conecta a **United States** (no Conexión rápida); `vpn_check` exit 0 con `country=US` | | |
 | 3 | = TEST 1 | — | Al terminar, desconecta y verifica `protected=false` | | |
 | 4 | VPN desconectada; desactiva Internet tras confirmar la consulta, o cierra NordVPN y bloquea su apertura | Mismo prompt | `unknown/false` tras 2 intentos → aborta, **no abre OE**, restaura estado | | |
 | 5 | Cierra sesión en openevidence.com | Mismo prompt | Detecta login, se detiene, pide inicio manual; restaura VPN | | |
