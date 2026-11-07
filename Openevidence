@@ -1,0 +1,280 @@
+# PROYECTO: Integración OpenEvidence + NordVPN para Claude Cowork
+
+Actúa como ingeniero senior especializado en automatización de macOS, Claude Cowork,
+Claude Code, MCP, browser automation y flujos de investigación clínica.
+
+## OBJETIVO
+
+Quiero una integración reutilizable para usar OpenEvidence desde Claude Cowork
+en mis proyectos de investigación médica.
+
+Cuando yo formule una pregunta que requiera evidencia científica, Claude debe:
+
+1. Detectar que OpenEvidence puede aportar valor.
+2. Comprobar el estado de NordVPN.
+3. Si NordVPN estaba desconectado, activarlo.
+4. Verificar que la conexión funciona.
+5. Abrir OpenEvidence en mi Chrome, usando mi sesión ya iniciada.
+6. Introducir una consulta clínica clara.
+7. Esperar la respuesta.
+8. Extraer la respuesta, citas y referencias visibles.
+9. Devolver una síntesis estructurada al Project correspondiente.
+10. Si NordVPN estaba desconectado al inicio, desconectarlo al final.
+11. Si NordVPN ya estaba conectado al inicio, mantenerlo conectado.
+
+El proceso debe ser automático dentro de los límites de seguridad y permisos de macOS.
+
+## PRINCIPIOS
+
+- No modificar configuraciones del sistema, red, Keychain, Firewall, DNS ni Kill Switch sin mi autorización explícita.
+- No almacenar credenciales de NordVPN, OpenEvidence, macOS ni códigos 2FA.
+- Si aparece Face ID, Touch ID, contraseña de macOS, 2FA, captcha o consentimiento, detente y pídeme que lo complete manualmente.
+- No enviar datos identificables de pacientes a OpenEvidence.
+- No usar scraping agresivo, bypass de autenticación ni mecanismos que vulneren las condiciones de uso de OpenEvidence.
+- No inventar referencias, DOIs, PMIDs, autores, revistas, fechas, cifras ni conclusiones.
+- No declarar terminado ningún componente sin pruebas reales.
+- Antes de cualquier instalación o cambio de permisos, explicar exactamente qué harás y pedir confirmación.
+
+## FASE 1 — AUDITORÍA
+
+Antes de implementar nada, inspecciona y resume:
+
+- Versión de macOS.
+- Aplicación NordVPN instalada, versión y método de control disponible.
+- Si existe CLI oficial, AppleScript, Shortcuts, Accessibility permissions u otro mecanismo fiable.
+- Navegadores instalados y si Chrome + Claude in Chrome están disponibles.
+- Estado de Claude Cowork, Claude Desktop y Claude Code.
+- Si Computer Use está habilitado.
+- Si OpenEvidence está abierto y autenticado en Chrome.
+- Permisos necesarios para automatización, accesibilidad, pantalla y control de aplicaciones.
+
+No presupongas que NordVPN tiene una CLI oficial en macOS.
+Comprueba primero los mecanismos realmente disponibles.
+
+## FASE 2 — DISEÑO MÍNIMO VIABLE
+
+Propón una arquitectura con el menor número posible de componentes.
+
+Prioridad de implementación:
+
+1. Skill global de Claude Cowork.
+2. Computer Use para NordVPN, si no existe un método más fiable.
+3. Claude in Chrome para OpenEvidence y reutilización de mi sesión.
+4. MCP local solo si es necesario para estabilidad, trazabilidad o reintentos.
+
+No construyas todavía un MCP server para NordVPN.
+Primero valida si Computer Use puede hacer el flujo completo de forma fiable.
+
+## FASE 3 — SKILL GLOBAL
+
+Crea una skill global llamada:
+
+openevidence-research
+
+Ubicación propuesta:
+
+~/.claude/skills/openevidence-research/
+
+Debe incluir:
+
+- SKILL.md
+- Instrucciones de activación automática
+- Protocolo de consulta a OpenEvidence
+- Criterios de evaluación de evidencia
+- Extracción de referencias
+- Gestión de errores
+- Plantillas de salida
+- Integración con Projects de investigación
+
+La skill debe activarse cuando la tarea requiera:
+- Buscar evidencia científica.
+- Contrastar una afirmación clínica.
+- Documentar antecedentes de un manuscrito.
+- Preparar una justificación para comité de ética.
+- Revisar literatura para una revisión sistemática.
+- Preparar una discusión, introducción o sección de métodos.
+
+No debe activarse para consultas triviales, redacción creativa, tareas administrativas
+o preguntas que no requieran evidencia actualizada.
+
+## FASE 4 — CONTROL DE NORDVPN
+
+Implementa primero el método más simple y seguro:
+
+- Comprobar si NordVPN está conectado.
+- Si no lo está, abrir la app y conectar mediante la interfaz gráfica.
+- Esperar a que la conexión se establezca.
+- Confirmar que OpenEvidence es accesible.
+- Si la conexión falla, detener el flujo y no acceder a OpenEvidence.
+- Registrar el estado inicial de la VPN: conectado o desconectado.
+- Al terminar, restaurar el estado inicial.
+
+No implementes un MCP server de NordVPN en esta fase.
+Solo propón un MCP local si, tras probar Computer Use, la automatización es inestable.
+
+Si finalmente propones un MCP, debe exponer como mínimo:
+
+- vpn_status
+- vpn_connect
+- vpn_disconnect
+- vpn_verify
+
+Con timeouts, bloqueo de operaciones simultáneas, registro técnico sin contenido clínico
+y sin almacenamiento de credenciales.
+
+## FASE 5 — ACCESO A OPENEVIDENCE
+
+Implementa el acceso mediante Claude in Chrome y mi sesión ya iniciada.
+
+El flujo debe ser:
+
+1. Abrir o reutilizar la pestaña de OpenEvidence.
+2. Comprobar que la sesión está activa.
+3. Si no está autenticado, detenerse y pedirme que inicie sesión manualmente.
+4. Introducir la consulta clínica reformulada.
+5. Esperar a que la respuesta esté completa.
+6. Extraer respuesta, citas, enlaces y referencias visibles.
+7. Devolver el resultado a Claude.
+8. Si OpenEvidence no responde, informa claramente y no inventes contenido.
+
+## FASE 6 — COMPORTAMIENTO CLÍNICO
+
+Cuando recibas una respuesta de OpenEvidence:
+
+- Identifica la conclusión principal.
+- Separa evidencia de interpretación.
+- Identifica el diseño de los estudios citados.
+- Distingue revisiones sistemáticas, ensayos aleatorizados, estudios observacionales y guías.
+- Conserva referencias y enlaces.
+- Señala limitaciones, heterogeneidad, riesgo de sesgo y evidencia indirecta.
+- No presentes OpenEvidence como fuente primaria.
+- Para revisiones sistemáticas, usa OpenEvidence como apoyo exploratorio,
+  no como sustituto de una búsqueda reproducible en PubMed, Embase, Cochrane u otras bases.
+
+## FASE 7 — INTEGRACIÓN CON PROJECTS
+
+La skill debe estar disponible globalmente y funcionar en Projects como:
+
+- Systematic Reviews & Meta-Analyses
+- Scientific Article Writing
+- Research Projects
+- Ethics Committee Applications
+- Clinical Research
+- Manuscript Peer Review
+- Medical Literature Review
+
+No modifiques mis Projects existentes sin autorización.
+
+Cada Project conservará sus instrucciones específicas.
+La skill será una capacidad transversal.
+
+Cuando esté dentro de un Project:
+
+- Para escritura científica: identifica afirmaciones que requieren referencia,
+  propone referencias y redacta párrafos con citas.
+- Para revisión de artículos: identifica afirmaciones que requieren evidencia,
+  detecta inconsistencias y propone actualizaciones.
+- Para solicitudes al comité de ética: prepara justificación científica,
+  estado del conocimiento, vacíos de evidencia y referencias clave.
+- Para revisiones sistemáticas: crea una tabla PICO y propone estrategia de búsqueda reproducible.
+
+## FASE 8 — ACTIVACIÓN AUTOMÁTICA
+
+Claude debe decidir si OpenEvidence es pertinente según el contenido de la tarea.
+
+Ejemplos de activación:
+
+- “Busca evidencia sobre la influencia de la pierna dominante en fracturas del quinto metatarsiano.”
+- “¿Qué evidencia existe sobre adrenalina diluida en suero de irrigación durante cirugía endoscópica de columna?”
+- “Prepara la justificación científica de este proyecto para el Comité de Ética.”
+
+Ejemplos de no activación:
+
+- “Corrige la ortografía de este párrafo.”
+- “Convierte esta tabla a formato APA.”
+- “Organiza mis notas de reunión.”
+- “Redacta un email administrativo.”
+
+Si hay duda razonable, pregunta antes de activar NordVPN.
+
+## FASE 9 — SEGURIDAD Y PRIVACIDAD
+
+- Anonimiza cualquier información clínica antes de consultar OpenEvidence.
+- No envíes historias clínicas, imágenes, identificadores, fechas de nacimiento ni datos personales.
+- No guardes consultas clínicas sensibles en logs.
+- No almacenes credenciales.
+- Mantén el control de las sesiones autenticadas.
+- Respeta las condiciones de uso de OpenEvidence.
+
+## FASE 10 — TESTS DE ACEPTACIÓN
+
+Implementa y ejecuta estos tests antes de dar por terminado el proyecto:
+
+TEST 1 — NordVPN desconectado:
+Claude conecta la VPN, verifica el acceso y realiza la consulta.
+
+TEST 2 — NordVPN ya conectado:
+Claude mantiene la conexión y no la reinicia.
+
+TEST 3 — Restauración del estado:
+Si la VPN estaba desconectada al inicio, se desconecta al terminar.
+
+TEST 4 — Fallo de VPN:
+Claude no accede a OpenEvidence sin protección.
+
+TEST 5 — Sesión no iniciada:
+Claude informa y solicita inicio de sesión manual.
+
+TEST 6 — Project de escritura científica:
+La skill se activa automáticamente cuando es pertinente.
+
+TEST 7 — Tarea no clínica:
+Claude no activa NordVPN ni consulta OpenEvidence.
+
+TEST 8 — Consulta ambigua:
+Claude pide aclaración antes de ejecutar la búsqueda.
+
+TEST 9 — Datos sensibles:
+Si detecta información identificable, la elimina o solicita anonimización antes de continuar.
+
+## FASE 10 — ENTREGABLES
+
+Crea una estructura clara:
+
+~/.claude/skills/openevidence-research/
+├── SKILL.md
+├── references/
+├── templates/
+└── troubleshooting.md
+
+Si finalmente se requiere MCP:
+
+~/openevidence-integration/
+├── mcp-nordvpn/
+├── scripts/
+├── tests/
+├── docs/
+└── README.md
+
+Incluye:
+
+- Instrucciones de instalación paso a paso.
+- Lista de permisos requeridos.
+- Procedimiento de rollback.
+- Guía de resolución de problemas.
+- Registro de errores técnico, sin contenido clínico sensible.
+- Tests automatizados cuando sea posible.
+
+## RESULTADO ESPERADO
+
+Un asistente de investigación médica en Claude Cowork que:
+
+- Detecta cuándo necesita OpenEvidence.
+- Activa NordVPN solo cuando es necesario.
+- Usa mi sesión de Chrome para OpenEvidence.
+- Recupera la respuesta y las referencias.
+- Devuelve una síntesis clínica estructurada.
+- Se integra con mis Projects de investigación.
+- Restaura el estado inicial de NordVPN.
+- Nunca inventa evidencia ni referencias.
+- Nunca expone datos sensibles ni credenciales.
